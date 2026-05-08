@@ -1,0 +1,429 @@
+```react
+import React, { useState } from 'react';
+import { 
+  Database, 
+  TableProperties, 
+  FileJson, 
+  AlertTriangle, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Zap, 
+  Building2, 
+  Gamepad2,
+  ArrowRight,
+  Server,
+  XCircle
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('intro');
+  
+  // シミュレーター用の状態管理
+  const [inputName, setInputName] = useState('');
+  const [inputAge, setInputAge] = useState('');
+  const [inputHobby, setInputHobby] = useState('');
+  const [sqlError, setSqlError] = useState(null);
+  
+  const [sqlData, setSqlData] = useState([
+    { id: 1, name: 'サトシ', age: 14 }
+  ]);
+  
+  const [noSqlData, setNoSqlData] = useState([
+    { id: 1, name: 'サトシ', age: 14, partner: 'ピカチュウ' }
+  ]);
+
+  // SQLへの追加ロジック（趣味があるとエラーになる）
+  const handleAddToSQL = () => {
+    if (!inputName) {
+      setSqlError("名前は必須です！");
+      return;
+    }
+    if (inputHobby) {
+      // 趣味が入力されているとスキーマ（ルール）違反でエラー！
+      setSqlError("🚨 エラー：現在の「表」には『趣味』を入れる列（カラム）がありません！追加するには表を作り直す工事（マイグレーション）が必要です。");
+      return;
+    }
+    
+    setSqlData([...sqlData, { id: Date.now(), name: inputName, age: inputAge || '-' }]);
+    setSqlError(null);
+    setInputName('');
+    setInputAge('');
+    setInputHobby('');
+  };
+
+  // NoSQLへの追加ロジック（どんな形でも受け入れる）
+  const handleAddToNoSQL = () => {
+    if (!inputName) return;
+    
+    const newData = { id: Date.now(), name: inputName };
+    if (inputAge) newData.age = inputAge;
+    if (inputHobby) newData.hobby = inputHobby; // 趣味があっても平気！
+    
+    setNoSqlData([...noSqlData, newData]);
+    setInputName('');
+    setInputAge('');
+    setInputHobby('');
+    setSqlError(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-24 selection:bg-blue-500/30">
+      {/* 背景エフェクト */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-orange-600/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pt-16">
+        
+        {/* ヘッダー */}
+        <header className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700 text-slate-300 text-xs font-bold mb-6 uppercase tracking-widest shadow-lg">
+            <Database className="w-4 h-4 text-emerald-400" />
+            Database Architecture Guide
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
+            <span className="text-blue-400">SQL</span> vs <span className="text-orange-400">NoSQL</span>
+          </h1>
+          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+            世界中のアプリの「記憶力」を支えるデータベース。<br />
+            「キッチリ整理整頓派」と「自由気まま派」、2つの脳みその違いを体感しよう。
+          </p>
+        </header>
+
+        {/* ナビゲーションタブ */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <button 
+            onClick={() => setActiveTab('intro')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'intro' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Server className="w-5 h-5" /> 概念図解
+          </button>
+          <button 
+            onClick={() => setActiveTab('sim')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'sim' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Zap className="w-5 h-5" /> 追加シミュレーター
+          </button>
+          <button 
+            onClick={() => setActiveTab('usecase')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'usecase' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <ShieldCheck className="w-5 h-5" /> どっちを使う？
+          </button>
+        </div>
+
+        {/* コンテンツエリア */}
+        <div className="transition-all duration-500">
+          
+          {/* 1. 概念図解セクション */}
+          {activeTab === 'intro' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              
+              {/* SQL (Relational) */}
+              <div className="bg-slate-900/80 rounded-[2rem] p-8 border border-blue-500/30 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+                  <TableProperties className="w-32 h-32 text-blue-500" />
+                </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
+                    <TableProperties className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-black text-white">SQL</h2>
+                    <p className="text-blue-400 text-xs font-bold tracking-widest uppercase">リレーショナル型 (RDB)</p>
+                  </div>
+                </div>
+                
+                <div className="bg-slate-950/50 rounded-2xl p-5 border border-slate-800 mb-6">
+                  <div className="text-sm font-bold text-slate-400 mb-2">一言でいうと：</div>
+                  <div className="text-xl font-bold text-blue-300">「超厳格なエクセルの表」</div>
+                </div>
+
+                <ul className="space-y-4 text-sm text-slate-300">
+                  <li className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
+                    <div>
+                      <strong className="text-white block">ルール（スキーマ）が絶対！</strong>
+                      「名前」「年齢」という列（カラム）を作ったら、それ以外の情報（趣味など）は絶対に書き込めません。
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
+                    <div>
+                      <strong className="text-white block">整理整頓のプロ</strong>
+                      データが綺麗に並んでいるので、「年齢が15歳以上で、東京に住んでいる人」などの複雑な検索が超得意です。
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+                    <div>
+                      <strong className="text-white block">変更には弱い</strong>
+                      後から「やっぱり趣味の列も追加しよう！」となると、何億件もある表全体を作り直す大工事（マイグレーション）が必要になります。
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              {/* NoSQL (Non-Relational) */}
+              <div className="bg-slate-900/80 rounded-[2rem] p-8 border border-orange-500/30 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+                  <FileJson className="w-32 h-32 text-orange-500" />
+                </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-orange-500/20 rounded-2xl flex items-center justify-center text-orange-400">
+                    <FileJson className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-black text-white">NoSQL</h2>
+                    <p className="text-orange-400 text-xs font-bold tracking-widest uppercase">非リレーショナル型</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950/50 rounded-2xl p-5 border border-slate-800 mb-6">
+                  <div className="text-sm font-bold text-slate-400 mb-2">一言でいうと：</div>
+                  <div className="text-xl font-bold text-orange-300">「なんでも入る魔法の自由帳」</div>
+                </div>
+
+                <ul className="space-y-4 text-sm text-slate-300">
+                  <li className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
+                    <div>
+                      <strong className="text-white block">形はバラバラでOK！</strong>
+                      A君は「名前と年齢」、B君は「名前と好きなゲーム」など、人によって持っているデータが違ってもポンポン保存できます。
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-orange-500 shrink-0" />
+                    <div>
+                      <strong className="text-white block">後からの変更に超強い</strong>
+                      新しい機能ができて保存する項目が増えても、大工事は不要。そのまま新しい形のデータを放り込むだけです。
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+                    <div>
+                      <strong className="text-white block">複雑な検索は少し苦手</strong>
+                      自由帳のように色んな情報が混ざっているので、「全員の年齢の平均を出す」のような表計算的な作業は苦手です。
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+            </div>
+          )}
+
+          {/* 2. シミュレーターセクション */}
+          {activeTab === 'sim' && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-4xl mx-auto">
+              <div className="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border border-slate-800 shadow-2xl">
+                
+                <h2 className="text-2xl font-black text-white mb-2 flex items-center gap-3">
+                  <Zap className="w-6 h-6 text-yellow-400" /> 
+                  データ追加シミュレーター
+                </h2>
+                <p className="text-slate-400 text-sm mb-8">
+                  新しいユーザー情報をデータベースに保存してみましょう。わざと<strong>「趣味」</strong>を入力して、SQLがどう怒るか見てみてください！
+                </p>
+
+                {/* 入力フォーム */}
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-700 mb-8 flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-slate-400 mb-1">名前 (必須)</label>
+                    <input 
+                      type="text" 
+                      value={inputName}
+                      onChange={(e) => setInputName(e.target.value)}
+                      placeholder="例：タケシ"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-slate-400 mb-1">年齢</label>
+                    <input 
+                      type="number" 
+                      value={inputAge}
+                      onChange={(e) => setInputAge(e.target.value)}
+                      placeholder="例：15"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-orange-400 mb-1">趣味 (予定外のデータ！)</label>
+                    <input 
+                      type="text" 
+                      value={inputHobby}
+                      onChange={(e) => setInputHobby(e.target.value)}
+                      placeholder="例：岩石集め"
+                      className="w-full bg-orange-900/20 border border-orange-500/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+                </div>
+
+                {/* エラーメッセージ表示エリア */}
+                {sqlError && (
+                  <div className="bg-red-900/20 border border-red-500/50 text-red-400 p-4 rounded-xl mb-8 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                    <XCircle className="w-6 h-6 shrink-0" />
+                    <p className="text-sm font-bold leading-relaxed">{sqlError}</p>
+                  </div>
+                )}
+
+                {/* データベース表示エリア */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  
+                  {/* SQLの様子 */}
+                  <div className="border border-blue-500/30 rounded-2xl overflow-hidden flex flex-col">
+                    <div className="bg-blue-900/30 p-4 border-b border-blue-500/30 flex justify-between items-center">
+                      <div className="font-bold text-blue-400 flex items-center gap-2">
+                        <TableProperties className="w-5 h-5" /> SQL (表形式)
+                      </div>
+                      <button 
+                        onClick={handleAddToSQL}
+                        className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shadow-lg shadow-blue-500/20 active:scale-95"
+                      >
+                        SQLに保存する
+                      </button>
+                    </div>
+                    <div className="p-4 bg-slate-900 flex-1 overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-blue-300 uppercase bg-blue-950/50 border-b border-blue-800">
+                          <tr>
+                            <th className="px-4 py-3">ID</th>
+                            <th className="px-4 py-3 border-l border-blue-800">名前</th>
+                            <th className="px-4 py-3 border-l border-blue-800">年齢</th>
+                            {/* 趣味の列は存在しない！ */}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sqlData.map((row) => (
+                            <tr key={row.id} className="border-b border-slate-800 hover:bg-slate-800/50">
+                              <td className="px-4 py-3 text-slate-500 font-mono">{row.id.toString().slice(-4)}</td>
+                              <td className="px-4 py-3 border-l border-slate-800 font-bold text-white">{row.name}</td>
+                              <td className="px-4 py-3 border-l border-slate-800 text-slate-300">{row.age}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* NoSQLの様子 */}
+                  <div className="border border-orange-500/30 rounded-2xl overflow-hidden flex flex-col">
+                    <div className="bg-orange-900/30 p-4 border-b border-orange-500/30 flex justify-between items-center">
+                      <div className="font-bold text-orange-400 flex items-center gap-2">
+                        <FileJson className="w-5 h-5" /> NoSQL (自由箱)
+                      </div>
+                      <button 
+                        onClick={handleAddToNoSQL}
+                        className="bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shadow-lg shadow-orange-500/20 active:scale-95"
+                      >
+                        NoSQLに保存する
+                      </button>
+                    </div>
+                    <div className="p-4 bg-slate-900 flex-1 space-y-3 h-[300px] overflow-y-auto">
+                      {noSqlData.map((doc) => (
+                        <div key={doc.id} className="bg-[#1e1e1e] border border-[#333] p-3 rounded-xl font-mono text-xs">
+                          <div className="text-slate-500">{"{"}</div>
+                          <div className="pl-4">
+                            <span className="text-blue-300">"id"</span>: <span className="text-green-400">{doc.id.toString().slice(-4)}</span>,
+                            <br />
+                            <span className="text-blue-300">"name"</span>: <span className="text-yellow-300">"{doc.name}"</span>
+                            {doc.age && (
+                              <span>,<br /><span className="text-blue-300">"age"</span>: <span className="text-green-400">{doc.age}</span></span>
+                            )}
+                            {doc.hobby && (
+                              <span className="animate-in fade-in zoom-in duration-300">,<br /><span className="text-orange-400 font-bold">"hobby"</span>: <span className="text-yellow-300 font-bold">"{doc.hobby}"</span> <span className="text-slate-500">{"// ← 自由に項目が増えた！"}</span></span>
+                            )}
+                            {doc.partner && (
+                              <span>,<br /><span className="text-blue-300">"partner"</span>: <span className="text-yellow-300">"{doc.partner}"</span></span>
+                            )}
+                          </div>
+                          <div className="text-slate-500">{"}"}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 3. どっちを使うの？セクション */}
+          {activeTab === 'usecase' && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-4xl mx-auto">
+              <h2 className="text-3xl font-black text-center mb-12">結局、どっちを使えばいいの？</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                {/* SQLのユースケース */}
+                <div className="bg-gradient-to-br from-blue-900/40 to-slate-900 rounded-[2rem] p-8 border border-blue-500/20">
+                  <div className="flex items-center gap-4 mb-8 pb-6 border-b border-blue-500/20">
+                    <Building2 className="w-12 h-12 text-blue-400" />
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">絶対に間違えられない時</h3>
+                      <p className="text-blue-400 font-bold text-sm">は SQL を使う！</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                      <div className="font-bold text-white mb-1">🏦 銀行のシステム（お金の送金）</div>
+                      <p className="text-xs text-slate-400 leading-relaxed">「残高」や「口座番号」というルールが途中で変わったら大事件です。1円のズレも許されない厳密な管理には、ルールの厳しいSQLが絶対です。</p>
+                    </div>
+                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                      <div className="font-bold text-white mb-1">🏫 学校の成績・名簿管理</div>
+                      <p className="text-xs text-slate-400 leading-relaxed">「全員の数学の平均点を出したい」など、表全体を使った複雑な計算を瞬時に行うのはSQLの得意技です。</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NoSQLのユースケース */}
+                <div className="bg-gradient-to-br from-orange-900/40 to-slate-900 rounded-[2rem] p-8 border border-orange-500/20">
+                  <div className="flex items-center gap-4 mb-8 pb-6 border-b border-orange-500/20">
+                    <Gamepad2 className="w-12 h-12 text-orange-400" />
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">柔軟にどんどん進化させたい時</h3>
+                      <p className="text-orange-400 font-bold text-sm">は NoSQL を使う！</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                      <div className="font-bold text-white mb-1">💬 LINEやSNSのメッセージ</div>
+                      <p className="text-xs text-slate-400 leading-relaxed">文字だけの人、スタンプを送る人、写真を10枚送る人。形がバラバラなデータを、1秒間に何万件も保存するスピード勝負にはNoSQLが最適です。</p>
+                    </div>
+                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                      <div className="font-bold text-white mb-1">🎮 ゲームのセーブデータ</div>
+                      <p className="text-xs text-slate-400 leading-relaxed">アップデートで「新しい魔法」や「ペット機能」が追加されても、ルールが自由なNoSQLなら、古いデータにエラーを起こさず新しい項目を増やせます。</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              
+              <div className="mt-12 text-center bg-slate-900 rounded-2xl p-6 border border-slate-800">
+                <p className="text-slate-300 font-bold">
+                  💡 現代の大きなアプリ（NetflixやAmazonなど）は、<br className="md:hidden" />
+                  <span className="text-blue-400">「お金の管理はSQL」</span>、<span className="text-orange-400">「おすすめ映画の履歴はNoSQL」</span>のように、<br className="md:hidden" />
+                  2つの脳みそを使い分けて作られています！
+                </p>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
+```
