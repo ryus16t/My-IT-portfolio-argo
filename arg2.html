@@ -1,0 +1,411 @@
+```react
+import React, { useState, useEffect } from 'react';
+import { 
+  BrainCircuit, 
+  Lightbulb, 
+  Gamepad2, 
+  ShoppingBag, 
+  Search, 
+  UserCircle2, 
+  Star,
+  Skull,
+  Crosshair,
+  Route,
+  Zap,
+  Timer
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('mindset');
+
+  // ==========================================
+  // ユースケース1：おすすめ（推薦）シミュレーター用状態
+  // ==========================================
+  const [myLikes, setMyLikes] = useState({ action: false, rpg: false, puzzle: false, sports: false });
+  const [recommendation, setRecommendation] = useState(null);
+
+  // 他のユーザーのデータ（データベース）
+  const otherUsers = [
+    { name: 'ユーザーA', likes: { action: true, rpg: true, puzzle: false, sports: false }, recommendedGame: '【大乱闘スマッシュRPG】' },
+    { name: 'ユーザーB', likes: { action: false, rpg: false, puzzle: true, sports: false }, recommendedGame: '【脳トレパズルMAX】' },
+    { name: 'ユーザーC', likes: { action: true, rpg: false, puzzle: false, sports: true }, recommendedGame: '【エクストリームサッカー】' },
+    { name: 'ユーザーD', likes: { action: true, rpg: true, puzzle: true, sports: false }, recommendedGame: '【謎解きアクションRPG】' },
+  ];
+
+  const calculateRecommendation = () => {
+    let bestMatch = null;
+    let maxScore = -1;
+
+    otherUsers.forEach(user => {
+      let score = 0;
+      // 趣味がどれくらい合うか（共通点）を計算するアルゴリズム（協調フィルタリングの基礎）
+      if (user.likes.action === myLikes.action && myLikes.action) score++;
+      if (user.likes.rpg === myLikes.rpg && myLikes.rpg) score++;
+      if (user.likes.puzzle === myLikes.puzzle && myLikes.puzzle) score++;
+      if (user.likes.sports === myLikes.sports && myLikes.sports) score++;
+
+      if (score > maxScore) {
+        maxScore = score;
+        bestMatch = user;
+      }
+    });
+
+    if (maxScore > 0) {
+      setRecommendation(`あなたと趣味が ${maxScore} 個合う「${bestMatch.name}」さんがハマっている\n${bestMatch.recommendedGame}\nがおすすめです！`);
+    } else {
+      setRecommendation('趣味をいくつかチェックして、「おすすめを計算」を押してください！');
+    }
+  };
+
+  // ==========================================
+  // ユースケース2：ゲームの敵（経路探索）シミュレーター用状態
+  // ==========================================
+  const [enemyAlgo, setEnemyAlgo] = useState('dumb'); // 'dumb' or 'smart'
+  const gridSize = 6;
+  const playerPos = { r: 5, c: 5 };
+  const enemyPos = { r: 0, c: 0 };
+  const walls = [
+    { r: 2, c: 1 }, { r: 2, c: 2 }, { r: 2, c: 3 }, { r: 2, c: 4 },
+    { r: 4, c: 3 }, { r: 4, c: 4 }, { r: 4, c: 5 }
+  ];
+  
+  const [path, setPath] = useState([]);
+  const [searchStatus, setSearchStatus] = useState('');
+
+  const isWall = (r, c) => walls.some(w => w.r === r && w.c === c);
+
+  const calculatePath = () => {
+    if (enemyAlgo === 'dumb') {
+      // ポンコツアルゴリズム：ただ直線的に近づこうとする（壁を考えない）
+      let current = { ...enemyPos };
+      let newPath = [current];
+      let hitWall = false;
+
+      while (current.r !== playerPos.r || current.c !== playerPos.c) {
+        let nextR = current.r;
+        let nextC = current.c;
+        if (current.r < playerPos.r) nextR++;
+        else if (current.r > playerPos.r) nextR--;
+        if (current.c < playerPos.c) nextC++;
+        else if (current.c > playerPos.c) nextC--;
+
+        if (isWall(nextR, nextC)) {
+          hitWall = true;
+          break; // 壁にぶつかって諦める
+        }
+        current = { r: nextR, c: nextC };
+        newPath.push(current);
+      }
+      setPath(newPath);
+      setSearchStatus(hitWall ? '壁にぶつかって見失いました... (ポンコツ)' : '到着');
+    } else {
+      // プロのアルゴリズム（幅優先探索 - BFS）：壁を避けて最短ルートを探す
+      let queue = [[enemyPos]];
+      let visited = new Set([`${enemyPos.r},${enemyPos.c}`]);
+      let foundPath = null;
+
+      while (queue.length > 0) {
+        let currentPath = queue.shift();
+        let current = currentPath[currentPath.length - 1];
+
+        if (current.r === playerPos.r && current.c === playerPos.c) {
+          foundPath = currentPath;
+          break;
+        }
+
+        const moves = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // 右、下、左、上
+        for (let move of moves) {
+          let nextR = current.r + move[0];
+          let nextC = current.c + move[1];
+
+          if (nextR >= 0 && nextR < gridSize && nextC >= 0 && nextC < gridSize && !isWall(nextR, nextC)) {
+            let key = `${nextR},${nextC}`;
+            if (!visited.has(key)) {
+              visited.add(key);
+              queue.push([...currentPath, { r: nextR, c: nextC }]);
+            }
+          }
+        }
+      }
+      
+      if (foundPath) {
+        setPath(foundPath);
+        setSearchStatus(`壁を迂回して ${foundPath.length - 1} 歩で到達します！ (プロ)`);
+      } else {
+        setSearchStatus('到達不可能です');
+      }
+    }
+  };
+
+  useEffect(() => {
+    calculatePath();
+  }, [enemyAlgo]);
+
+
+  return (
+    <div className="min-h-screen bg-[#050816] text-slate-200 font-sans pb-24 selection:bg-purple-500/30">
+      {/* 背景エフェクト */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pt-16">
+        
+        {/* ヘッダー */}
+        <header className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-purple-900/30 px-4 py-2 rounded-full border border-purple-500/30 text-purple-300 text-xs font-bold mb-6 uppercase tracking-widest shadow-lg">
+            <BrainCircuit className="w-4 h-4" />
+            Inside the Mind of a Pro
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight leading-tight">
+            プロはアルゴリズムを<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400">どう使っているのか？</span>
+          </h1>
+          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+            システムに「賢い脳みそ」を組み込む仕事。<br />
+            Amazon、Netflix、大ヒットゲーム... プロのエンジニアの頭の中と、実際のアプリでの使われ方（ユースケース）を体感しよう。
+          </p>
+        </header>
+
+        {/* タブナビゲーション */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <button 
+            onClick={() => setActiveTab('mindset')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'mindset' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Lightbulb className="w-5 h-5" /> 1. プロの頭の中
+          </button>
+          <button 
+            onClick={() => setActiveTab('recommend')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'recommend' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <ShoppingBag className="w-5 h-5" /> 2. 通販・SNS（おすすめ）
+          </button>
+          <button 
+            onClick={() => setActiveTab('game')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'game' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Gamepad2 className="w-5 h-5" /> 3. ゲームの敵（経路探索）
+          </button>
+        </div>
+
+        {/* コンテンツエリア */}
+        <div className="transition-all duration-500">
+          
+          {/* ======================================= */}
+          {/* 1. プロの頭の中（マインドセット） */}
+          {/* ======================================= */}
+          {activeTab === 'mindset' && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-4xl mx-auto space-y-8">
+              
+              <div className="bg-slate-900/80 rounded-[2.5rem] p-8 md:p-12 border border-purple-500/30 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                  <BrainCircuit className="w-48 h-48 text-purple-500" />
+                </div>
+                
+                <h2 className="text-2xl md:text-3xl font-black text-white mb-8 relative z-10">
+                  プロは「ゼロから発明」しない。<br />
+                  <span className="text-purple-400">「道具箱から選ぶ」</span>のだ！
+                </h2>
+
+                <div className="space-y-6 relative z-10">
+                  <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800">
+                    <h3 className="font-bold text-lg text-cyan-300 mb-2 flex items-center gap-2">
+                      <Search className="w-5 h-5" /> アルゴリズムは「人類の知恵の結晶」
+                    </h3>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      「データを早く並び替える方法」や「迷路の最短ルートを見つける方法」は、昔の天才数学者やプログラマーたちが既に考えてくれています。<br />
+                      プロのエンジニアは、それらを全てゼロから考えるのではなく、<strong>「今直面している問題には、どのアルゴリズム（知恵）を当てはめればいいか？」</strong>を見抜く力を持っています。
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800">
+                    <h3 className="font-bold text-lg text-pink-300 mb-2 flex items-center gap-2">
+                      <Timer className="w-5 h-5" /> プロが一番気にする「計算量（パニック度）」
+                    </h3>
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      プロがアルゴリズムを選ぶ時、一番気にするのが<strong>「データが100万個になった時、パソコンがどれくらいパニックになるか（時間がかかるか）」</strong>です。<br />
+                      10個のデータなら素人のアルゴリズムでも一瞬ですが、Instagramのように世界中に何億人もユーザーがいる場合、悪いアルゴリズムを選ぶとサーバーが熱暴走してアプリが止まってしまいます。<br />
+                      （これを専門用語で「ビッグオー記法（O記法）」と呼びます）
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ======================================= */}
+          {/* 2. ユースケース：おすすめ機能 */}
+          {/* ======================================= */}
+          {activeTab === 'recommend' && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-4xl mx-auto">
+              <div className="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border border-slate-800 shadow-2xl">
+                
+                <h2 className="text-2xl font-black text-white mb-2 flex items-center gap-3">
+                  <Star className="w-6 h-6 text-yellow-400" /> 
+                  ユースケース：AmazonやNetflixの「おすすめ」
+                </h2>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  あなたが「これ好きかも！」と思う商品をアプリが勝手に出してくる仕組み。<br />
+                  これは<strong>「協調フィルタリング」</strong>というアルゴリズムです。「あなたと趣味が似ている他の人が買ったものを、あなたにお勧めする」という計算を裏で行っています。
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* 左：自分の好み入力 */}
+                  <div className="bg-slate-950 p-6 rounded-2xl border border-slate-700">
+                    <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                      <UserCircle2 className="text-blue-400" /> あなたの好きなゲームジャンル
+                    </h3>
+                    <div className="space-y-3">
+                      {Object.keys(myLikes).map(genre => (
+                        <label key={genre} className="flex items-center gap-3 cursor-pointer p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-colors">
+                          <input 
+                            type="checkbox" 
+                            checked={myLikes[genre]}
+                            onChange={(e) => setMyLikes({...myLikes, [genre]: e.target.checked})}
+                            className="w-5 h-5 accent-blue-500"
+                          />
+                          <span className="text-slate-300 font-bold capitalize">{genre === 'rpg' ? 'RPG' : genre}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <button 
+                      onClick={calculateRecommendation}
+                      className="w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/30 active:scale-95"
+                    >
+                      アルゴリズムで「おすすめ」を計算
+                    </button>
+                  </div>
+
+                  {/* 右：計算結果とデータベース */}
+                  <div className="flex flex-col gap-4">
+                    <div className="bg-gradient-to-br from-blue-900/40 to-slate-900 p-6 rounded-2xl border border-blue-500/30 flex-1 flex flex-col justify-center">
+                      <h3 className="font-bold text-blue-300 mb-2 text-sm uppercase tracking-widest">アルゴリズムの答え</h3>
+                      <div className="text-white font-bold whitespace-pre-wrap leading-relaxed">
+                        {recommendation || '左で趣味を選んで計算ボタンを押してください。'}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
+                      <div className="text-slate-500 mb-2 font-bold">裏側で比較している他のユーザーたち：</div>
+                      {otherUsers.map(user => (
+                        <div key={user.name} className="flex justify-between text-slate-400 border-b border-slate-800/50 py-1">
+                          <span>{user.name}</span>
+                          <span className="truncate ml-2">{user.recommendedGame} プレイ中</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ======================================= */}
+          {/* 3. ユースケース：ゲームの敵（経路探索） */}
+          {/* ======================================= */}
+          {activeTab === 'game' && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-4xl mx-auto">
+              <div className="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border border-slate-800 shadow-2xl">
+                
+                <h2 className="text-2xl font-black text-white mb-2 flex items-center gap-3">
+                  <Skull className="w-6 h-6 text-red-400" /> 
+                  ユースケース：ゲームの敵キャラの動き
+                </h2>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  アクションゲームで、敵が障害物を避けてあなたを追いかけてくる仕組み。<br />
+                  これは<strong>「経路探索（A*やBFSなど）」</strong>というアルゴリズムです。敵の「脳みそ」をプロのものに切り替えると、動きがどう変わるか見てみましょう。
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                  {/* 左：コントロールパネル */}
+                  <div className="md:col-span-5 bg-slate-950 p-6 rounded-2xl border border-slate-700">
+                    <h3 className="font-bold text-white mb-4">敵の「脳みそ」をセット</h3>
+                    
+                    <div className="flex flex-col gap-3 mb-6">
+                      <button 
+                        onClick={() => setEnemyAlgo('dumb')}
+                        className={`p-4 rounded-xl border font-bold text-sm text-left transition-all ${
+                          enemyAlgo === 'dumb' ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-slate-900 border-slate-800 text-slate-500 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1"><Zap className="w-4 h-4"/> 素人の脳みそ</div>
+                        <div className="text-[10px] font-normal text-slate-400">ただ真っ直ぐプレイヤーに近づこうとする。<br/>壁があると前に進めなくなる。</div>
+                      </button>
+                      
+                      <button 
+                        onClick={() => setEnemyAlgo('smart')}
+                        className={`p-4 rounded-xl border font-bold text-sm text-left transition-all ${
+                          enemyAlgo === 'smart' ? 'bg-cyan-900/20 border-cyan-500 text-cyan-400' : 'bg-slate-900 border-slate-800 text-slate-500 hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1"><Route className="w-4 h-4"/> プロの脳みそ (BFS探索)</div>
+                        <div className="text-[10px] font-normal text-slate-400">マップ全体を計算し、壁を迂回する「最短ルート」を見つけ出して追ってくる。</div>
+                      </button>
+                    </div>
+
+                    <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                      <div className="text-xs text-slate-500 font-bold mb-1">計算結果：</div>
+                      <div className={`font-bold ${enemyAlgo === 'smart' ? 'text-cyan-400' : 'text-red-400'}`}>
+                        {searchStatus}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 右：ゲームマップ */}
+                  <div className="md:col-span-7 flex justify-center items-center bg-[#1e1e1e] rounded-2xl border-4 border-slate-800 p-4 md:p-8">
+                    <div className="grid grid-cols-6 gap-1 md:gap-2">
+                      {Array.from({ length: gridSize * gridSize }).map((_, index) => {
+                        const r = Math.floor(index / gridSize);
+                        const c = index % gridSize;
+                        
+                        const isPlayer = playerPos.r === r && playerPos.c === c;
+                        const isEnemy = enemyPos.r === r && enemyPos.c === c;
+                        const isWallCell = isWall(r, c);
+                        const isPath = path.some(p => p.r === r && p.c === c);
+                        const isHitWall = enemyAlgo === 'dumb' && path.length > 0 && isWallCell && 
+                                          (Math.abs(path[path.length-1].r - r) <= 1 && Math.abs(path[path.length-1].c - c) <= 1);
+
+                        let cellClass = "w-8 h-8 md:w-12 md:h-12 rounded-lg flex items-center justify-center transition-all duration-300 ";
+                        
+                        if (isPlayer) cellClass += "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)] z-10 scale-110";
+                        else if (isEnemy) cellClass += "bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] z-10 scale-110";
+                        else if (isHitWall) cellClass += "bg-red-900/50 border-2 border-red-500 animate-pulse";
+                        else if (isWallCell) cellClass += "bg-slate-700 border-b-4 border-slate-900";
+                        else if (isPath) cellClass += enemyAlgo === 'smart' ? "bg-cyan-500/30 border border-cyan-500 scale-90" : "bg-red-500/30 border border-red-500 scale-90";
+                        else cellClass += "bg-slate-800/50 border border-slate-800";
+
+                        return (
+                          <div key={index} className={cellClass}>
+                            {isPlayer && <Crosshair className="w-5 h-5 md:w-8 md:h-8 text-white" />}
+                            {isEnemy && <Skull className="w-5 h-5 md:w-8 md:h-8 text-white" />}
+                            {isHitWall && !isPlayer && !isEnemy && <span className="text-red-500 font-bold text-xs">X</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
+```
