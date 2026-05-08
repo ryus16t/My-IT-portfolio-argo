@@ -1,0 +1,363 @@
+```react
+import React, { useState, useEffect } from 'react';
+import { 
+  Store, 
+  ChefHat, 
+  TabletSmartphone, 
+  Truck, 
+  Zap, 
+  Clock, 
+  ShieldCheck, 
+  Search,
+  Settings,
+  Cpu,
+  ArrowRight,
+  MonitorPlay
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('concept');
+  
+  // シミュレーター用の状態
+  const [algoType, setAlgoType] = useState('bad'); // 'bad' or 'good'
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchProgress, setSearchProgress] = useState(0);
+  const [result, setResult] = useState(null);
+
+  // シミュレーション実行ロジック
+  const handleSearch = () => {
+    if (isSearching) return;
+    setIsSearching(true);
+    setSearchProgress(0);
+    setResult(null);
+
+    let progress = 0;
+    const speed = algoType === 'bad' ? 50 : 200; // 悪いアルゴリズムは遅い（更新間隔が短いだけで進みは遅い）
+    const increment = algoType === 'bad' ? 2 : 15; // 良いアルゴリズムは一気に進む
+
+    const interval = setInterval(() => {
+      progress += increment;
+      if (progress >= 100) {
+        clearInterval(interval);
+        setSearchProgress(100);
+        setResult(algoType === 'bad' ? '5時間 (効率悪)' : '2時間 (最速!)');
+        setIsSearching(false);
+      } else {
+        setSearchProgress(progress);
+      }
+    }, speed);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-24 selection:bg-blue-500/30">
+      {/* 背景エフェクト */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-emerald-600/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pt-16">
+        
+        {/* ヘッダー */}
+        <header className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700 text-slate-300 text-xs font-bold mb-6 uppercase tracking-widest shadow-lg">
+            <MonitorPlay className="w-4 h-4 text-emerald-400" />
+            System & Algorithm
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight leading-tight">
+            <span className="text-blue-400">システム</span> と <span className="text-emerald-400">アルゴリズム</span><br />
+            繋がり解明ガイド
+          </h1>
+          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+            「箱」と「脳みそ」の関係に気づけば、プログラミングの世界が一気にクリアになります。<br />
+            まずはレストランの例えから見ていきましょう。
+          </p>
+        </header>
+
+        {/* タブ */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <button 
+            onClick={() => setActiveTab('concept')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'concept' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Store className="w-5 h-5" /> 1. レストランで例えると？
+          </button>
+          <button 
+            onClick={() => setActiveTab('sim')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'sim' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Cpu className="w-5 h-5" /> 2. 繋がり体感シミュレーター
+          </button>
+          <button 
+            onClick={() => setActiveTab('real')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'real' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Settings className="w-5 h-5" /> 3. ITの世界ではどうなる？
+          </button>
+        </div>
+
+        {/* --- タブ1：概念 --- */}
+        {activeTab === 'concept' && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-12 max-w-4xl mx-auto">
+            
+            <div className="bg-slate-900/80 rounded-[2.5rem] p-8 md:p-12 border border-slate-800 shadow-2xl relative overflow-hidden">
+              <h2 className="text-3xl font-black text-center mb-10 text-white">
+                システム ＝ <span className="text-blue-400">「お店全体」</span><br className="md:hidden"/>
+                アルゴリズム ＝ <span className="text-emerald-400">「厨房のレシピ」</span>
+              </h2>
+
+              {/* 図解エリア */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative">
+                
+                {/* 背景の繋がり線（PCのみ） */}
+                <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-slate-800 -translate-y-1/2 z-0"></div>
+
+                {/* 1. インターフェース */}
+                <div className="bg-slate-950 p-6 rounded-3xl border border-slate-700 w-full md:w-1/3 z-10 text-center shadow-xl">
+                  <div className="w-16 h-16 mx-auto bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 mb-4">
+                    <TabletSmartphone className="w-8 h-8" />
+                  </div>
+                  <h3 className="font-bold text-white mb-2">注文タブレット</h3>
+                  <p className="text-xs text-slate-400">お客さんが「ハンバーグ」のボタンを押す場所。（画面・UI）</p>
+                </div>
+
+                <ArrowRight className="w-8 h-8 text-slate-600 md:hidden rotate-90" />
+
+                {/* 2. システム */}
+                <div className="bg-blue-900/20 p-6 rounded-3xl border-2 border-blue-500/50 w-full md:w-1/3 z-10 text-center shadow-[0_0_30px_rgba(59,130,246,0.15)] relative overflow-hidden">
+                  <div className="absolute inset-0 bg-blue-500/5 animate-pulse"></div>
+                  <div className="w-16 h-16 mx-auto bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-4 relative z-10">
+                    <Store className="w-8 h-8" />
+                  </div>
+                  <h3 className="font-bold text-blue-400 mb-2 relative z-10">お店システム</h3>
+                  <p className="text-xs text-slate-300 relative z-10">注文を受け取り、厨房に指示を出し、出来上がったら運ぶ「全体の仕組み」。</p>
+                </div>
+
+                <ArrowRight className="w-8 h-8 text-slate-600 md:hidden rotate-90" />
+
+                {/* 3. アルゴリズム */}
+                <div className="bg-emerald-900/20 p-6 rounded-3xl border-2 border-emerald-500/50 w-full md:w-1/3 z-10 text-center shadow-[0_0_30px_rgba(52,211,153,0.15)] relative overflow-hidden">
+                  <div className="w-16 h-16 mx-auto bg-emerald-600 rounded-2xl flex items-center justify-center text-white mb-4">
+                    <ChefHat className="w-8 h-8" />
+                  </div>
+                  <h3 className="font-bold text-emerald-400 mb-2">極秘レシピ (アルゴリズム)</h3>
+                  <p className="text-xs text-slate-300">「どうすれば一番早く・美味しくハンバーグが焼けるか」の計算手順。</p>
+                </div>
+              </div>
+
+              {/* 解説テキスト */}
+              <div className="mt-12 bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  お客さんは「タブレット（画面）」と「お店（システム）」しか見えません。<br />
+                  しかし、裏でシェフが持つ<strong className="text-emerald-400">「手順（アルゴリズム）」が優秀であればあるほど、料理は早く出てきます。</strong><br />
+                  逆にアルゴリズムがダメ（野菜を1時間炒める等）だと、システム全体が「遅いお店」になってしまいます。
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- タブ2：シミュレーター --- */}
+        {activeTab === 'sim' && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-4xl mx-auto">
+            
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-black text-white mb-4">通販アプリで繋がりを体感しよう</h2>
+              <p className="text-sm text-slate-400">
+                あなたは「ルート検索アプリ（システム）」を使っています。<br />
+                システムの中にある「アルゴリズム（脳みそ）」を入れ替えると、どうなるか見てみましょう。
+              </p>
+            </div>
+
+            <div className="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border border-slate-800 shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* 左側：システム（ユーザーが見る画面） */}
+              <div className="border border-slate-700 rounded-3xl overflow-hidden bg-slate-950 flex flex-col relative">
+                <div className="absolute top-2 left-2 bg-blue-600/20 text-blue-400 text-[10px] font-bold px-2 py-1 rounded uppercase">System UI</div>
+                
+                <div className="p-6 pt-12 flex-1 flex flex-col justify-center items-center">
+                  <Truck className="w-16 h-16 text-slate-600 mb-6" />
+                  <h3 className="text-xl font-bold text-white mb-6">お急ぎルート検索システム</h3>
+                  
+                  <div className="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl mb-4 text-center text-sm text-slate-400">
+                    出発：東京　→　到着：大阪
+                  </div>
+
+                  <button 
+                    onClick={handleSearch}
+                    disabled={isSearching}
+                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
+                      isSearching 
+                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+                      : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/30 active:scale-95'
+                    }`}
+                  >
+                    {isSearching ? '裏側で計算中...' : '検索スタート'}
+                  </button>
+
+                  {/* 結果表示 */}
+                  <div className="h-16 mt-6 flex items-center justify-center w-full">
+                    {result ? (
+                      <div className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-6 py-3 rounded-xl font-bold text-lg animate-in zoom-in duration-300 w-full text-center">
+                        到着まで：{result}
+                      </div>
+                    ) : (
+                      <div className="text-slate-600 text-sm">ここに結果が出ます</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 右側：アルゴリズム（システムの中身） */}
+              <div className="border border-slate-700 rounded-3xl overflow-hidden bg-slate-900 flex flex-col relative">
+                <div className="absolute top-2 left-2 bg-emerald-600/20 text-emerald-400 text-[10px] font-bold px-2 py-1 rounded uppercase">Internal Algorithm</div>
+                
+                <div className="p-6 pt-12">
+                  <h3 className="font-bold text-white mb-4">システムに組み込む「脳みそ」を選ぶ</h3>
+                  
+                  {/* アルゴリズム切り替えトグル */}
+                  <div className="flex bg-slate-950 p-1 rounded-xl mb-8 border border-slate-800">
+                    <button 
+                      onClick={() => setAlgoType('bad')}
+                      disabled={isSearching}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                        algoType === 'bad' ? 'bg-red-900/50 text-red-400 border border-red-500/50' : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      素人の手順<br/><span className="text-[10px] font-normal">（全ての道を調べる）</span>
+                    </button>
+                    <button 
+                      onClick={() => setAlgoType('good')}
+                      disabled={isSearching}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                        algoType === 'good' ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500/50' : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      プロの手順<br/><span className="text-[10px] font-normal">（最短距離だけ計算）</span>
+                    </button>
+                  </div>
+
+                  {/* 計算のアニメーション */}
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 h-48 flex flex-col justify-center">
+                    <div className="text-xs text-slate-500 mb-2">裏側で行われている計算の様子：</div>
+                    
+                    <div className="w-full h-4 bg-slate-800 rounded-full overflow-hidden mb-4">
+                      <div 
+                        className={`h-full transition-all duration-100 ${algoType === 'bad' ? 'bg-red-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${searchProgress}%` }}
+                      ></div>
+                    </div>
+                    
+                    <div className="font-mono text-xs text-slate-400 h-20 overflow-hidden relative">
+                      {isSearching && algoType === 'bad' && (
+                        <div className="animate-pulse text-red-400">
+                          道Aを検証中... 遠回りでした。<br/>
+                          道Bを検証中... 行き止まりでした。<br/>
+                          道Cを検証中... うーん、遅いかも。<br/>
+                          （無駄な計算をたくさんしています）
+                        </div>
+                      )}
+                      {isSearching && algoType === 'good' && (
+                        <div className="animate-pulse text-emerald-400">
+                          ダイクストラ法を起動。<br/>
+                          高速道路のルートのみ抽出完了。<br/>
+                          最短距離確定。結果をシステムに返します！<br/>
+                          （無駄を省いて一瞬で計算！）
+                        </div>
+                      )}
+                      {!isSearching && (
+                        <div>待機中... 左のボタンを押すと<br/>ここ（アルゴリズム）が働きます。</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            
+            <div className="mt-8 text-center bg-blue-900/20 p-6 rounded-2xl border border-blue-500/30 max-w-2xl mx-auto">
+              <p className="text-sm text-blue-200 font-bold">
+                💡 お分かりいただけましたか？<br />
+                システムの外側（ボタンや見た目）は全く同じでも、<br />
+                中に組み込むアルゴリズムを変えるだけで、システム全体の「速さ」が変わるのです！
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* --- タブ3：現実のIT --- */}
+        {activeTab === 'real' && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-4xl mx-auto">
+            <h2 className="text-3xl font-black text-center mb-12">現実のITの世界では？</h2>
+
+            <div className="space-y-6">
+              
+              {/* YouTube */}
+              <div className="bg-slate-900/80 rounded-[2rem] p-8 border border-slate-800 flex flex-col md:flex-row gap-8 items-center">
+                <div className="w-20 h-20 bg-red-500/20 rounded-2xl flex items-center justify-center text-red-500 shrink-0">
+                  <MonitorPlay className="w-10 h-10" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">YouTube の場合</h3>
+                  <div className="flex flex-col gap-2 mt-4 text-sm">
+                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                      <span className="text-blue-400 font-bold mr-2">[システム]</span> 
+                      <span className="text-slate-300">動画を再生する画面、コメント欄、世界中の動画を保存するサーバー全体。</span>
+                    </div>
+                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                      <span className="text-emerald-400 font-bold mr-2">[アルゴリズム]</span> 
+                      <span className="text-slate-300">「この人はゲーム好きだから、次はゲーム動画を出そう」とおすすめを選ぶ計算手順。</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Google */}
+              <div className="bg-slate-900/80 rounded-[2rem] p-8 border border-slate-800 flex flex-col md:flex-row gap-8 items-center">
+                <div className="w-20 h-20 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
+                  <Search className="w-10 h-10" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Google検索 の場合</h3>
+                  <div className="flex flex-col gap-2 mt-4 text-sm">
+                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                      <span className="text-blue-400 font-bold mr-2">[システム]</span> 
+                      <span className="text-slate-300">検索する窓（UI）、文字を受け取る機能、結果をリストにして表示する機能。</span>
+                    </div>
+                    <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                      <span className="text-emerald-400 font-bold mr-2">[アルゴリズム]</span> 
+                      <span className="text-slate-300">何億個もあるページから、「一番正解に近い10個」を一瞬で探し出して並べ替える手順。</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="mt-12 text-center bg-gradient-to-br from-slate-900 to-blue-900/30 p-8 rounded-3xl border border-blue-500/30 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-4">結論：アルゴリズムはシステムの「脳みそ」である</h3>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                システムとは、「目的を果たすための大きな機械やお店（箱）」です。<br />
+                アルゴリズムとは、「その中で問題を一番賢く解決するための計算手順（脳みそ）」です。<br />
+                <br />
+                <strong>素晴らしいアルゴリズム（脳みそ）を、立派なシステム（箱）に組み込んだ時、<br />世界を変えるような凄いITサービスが生まれるのです！</strong>
+              </p>
+            </div>
+
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
+```
