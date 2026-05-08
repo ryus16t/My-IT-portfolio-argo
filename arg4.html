@@ -1,0 +1,393 @@
+```react
+import React, { useState, useEffect } from 'react';
+import { 
+  Search, 
+  Globe, 
+  Link as LinkIcon, 
+  Trophy, 
+  Gamepad2, 
+  Swords, 
+  Crosshair, 
+  Calculator,
+  Zap,
+  CheckCircle2,
+  XCircle,
+  EyeOff
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('pagerank');
+
+  // ==========================================
+  // ユースケース1：Googleのページランク
+  // ==========================================
+  // 4つのウェブサイトのリンク関係（初期状態：誰もリンクしていない）
+  const [links, setLinks] = useState({
+    A: { targets: [] },
+    B: { targets: [] },
+    C: { targets: [] },
+    D: { targets: [] }
+  });
+
+  const [scores, setScores] = useState({ A: 10, B: 10, C: 10, D: 10 });
+
+  const toggleLink = (from, to) => {
+    setLinks(prev => {
+      const newTargets = prev[from].targets.includes(to)
+        ? prev[from].targets.filter(t => t !== to)
+        : [...prev[from].targets, to];
+      return { ...prev, [from]: { targets: newTargets } };
+    });
+  };
+
+  // 簡易的なページランク計算（本物はもっと複雑ですが、本質はこれです）
+  useEffect(() => {
+    // 全員に基礎点10を与える
+    let newScores = { A: 10, B: 10, C: 10, D: 10 };
+    
+    // リンクによる「おすすめポイント」の受け渡しを3回繰り返す（収束シミュレーション）
+    for (let step = 0; step < 3; step++) {
+      let tempScores = { A: 10, B: 10, C: 10, D: 10 };
+      Object.keys(links).forEach(giver => {
+        const outLinks = links[giver].targets;
+        if (outLinks.length > 0) {
+          // 自分の持っているスコアの半分を、リンク先に分配する
+          const pointToGive = newScores[giver] * 0.5 / outLinks.length;
+          outLinks.forEach(receiver => {
+            tempScores[receiver] += pointToGive;
+          });
+        }
+      });
+      newScores = tempScores;
+    }
+    
+    setScores(newScores);
+  }, [links]);
+
+  // ランキング順に並び替え
+  const ranking = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+
+  // ==========================================
+  // ユースケース2：ゲームの当たり判定（AABB）
+  // ==========================================
+  const [playerX, setPlayerX] = useState(20);
+  const [playerY, setPlayerY] = useState(20);
+  
+  // 敵の固定位置とサイズ
+  const enemyX = 60;
+  const enemyY = 50;
+  const size = 20; // キャラクターの幅と高さ（半分のサイズ）
+
+  // X軸とY軸がそれぞれ重なっているかの計算
+  const isXHit = Math.abs(playerX - enemyX) < (size * 2);
+  const isYHit = Math.abs(playerY - enemyY) < (size * 2);
+  
+  // 両方重なったら「衝突（ドカーン！）」
+  const isHit = isXHit && isYHit;
+
+  return (
+    <div className="min-h-screen bg-[#030712] text-slate-200 font-sans pb-24 selection:bg-rose-500/30">
+      {/* 背景エフェクト */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-rose-600/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 pt-16">
+        
+        {/* ヘッダー */}
+        <header className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700 text-slate-300 text-xs font-bold mb-6 uppercase tracking-widest shadow-lg">
+            <Zap className="w-4 h-4 text-yellow-400" />
+            Algorithm Magic Vol.3
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tight leading-tight">
+            コンピュータは<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400">
+              世界をどう見ているのか？
+            </span>
+          </h1>
+          <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+            Googleはどうやって一番良いページを見つけている？<br />
+            ゲームのキャラクターはどうやって「ぶつかった」と気づく？<br />
+            コンピュータには「絵」は見えていません。全ては美しい計算（アルゴリズム）の魔法です。
+          </p>
+        </header>
+
+        {/* タブナビゲーション */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <button 
+            onClick={() => setActiveTab('pagerank')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'pagerank' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Search className="w-5 h-5" /> 1. Googleの順位決め
+          </button>
+          <button 
+            onClick={() => setActiveTab('collision')}
+            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
+              activeTab === 'collision' ? 'bg-white text-slate-950 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105' : 'bg-slate-900/50 text-slate-400 hover:bg-slate-800'
+            }`}
+          >
+            <Gamepad2 className="w-5 h-5" /> 2. ゲームの当たり判定
+          </button>
+        </div>
+
+        {/* コンテンツエリア */}
+        <div className="transition-all duration-500">
+
+          {/* ======================================= */}
+          {/* 1. Googleのページランク */}
+          {/* ======================================= */}
+          {activeTab === 'pagerank' && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-5xl mx-auto">
+              <div className="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border border-slate-800 shadow-2xl">
+                
+                <h2 className="text-2xl md:text-3xl font-black text-white mb-4 flex items-center gap-3">
+                  <Globe className="w-8 h-8 text-blue-400" /> 
+                  Googleを最強にした「人気投票」アルゴリズム
+                </h2>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  世界中に何十億もあるウェブページ。Googleはどうやって「検索順位1位」を決めているのでしょう？<br />
+                  実は、ページの内容だけでなく<strong>「誰からリンクされているか（おすすめされているか）」</strong>という人気投票を計算しているのです。これを「PageRank（ページランク）」と呼びます。
+                </p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  
+                  {/* 左：リンクの操作パネル */}
+                  <div className="lg:col-span-5 bg-slate-950 p-6 rounded-3xl border border-slate-700">
+                    <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                      <LinkIcon className="w-5 h-5 text-blue-400" /> リンク（矢印）を繋いでみよう
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-6">
+                      スイッチをONにすると、そのページから別のページへ「リンク（おすすめ）」が張られます。
+                    </p>
+
+                    <div className="space-y-4">
+                      {['A', 'B', 'C'].map(from => (
+                        <div key={from} className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                          <span className="font-bold text-white mb-2 block">ページ {from} のリンク先：</span>
+                          <div className="flex gap-4">
+                            {['A', 'B', 'C', 'D'].filter(to => to !== from).map(to => (
+                              <label key={to} className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={links[from].targets.includes(to)}
+                                  onChange={() => toggleLink(from, to)}
+                                  className="w-4 h-4 accent-blue-500"
+                                />
+                                <span className="text-sm font-bold text-slate-400 hover:text-white">→ {to}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 bg-blue-900/20 p-4 rounded-xl border border-blue-500/30">
+                      <p className="text-xs text-blue-300 font-bold leading-relaxed">
+                        💡 体感ポイント：<br />
+                        色んなページから「D」に向けて一斉にリンクを繋いでみてください。Dの円がどんどん大きくなり、ランキング1位に躍り出ます！
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 右：結果とビジュアライズ */}
+                  <div className="lg:col-span-7 flex flex-col gap-6">
+                    
+                    {/* ビジュアル表示エリア */}
+                    <div className="bg-[#0f172a] rounded-3xl border-2 border-slate-800 p-8 h-64 relative flex items-center justify-center overflow-hidden">
+                      <div className="absolute top-2 left-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Internet Simulator</div>
+                      
+                      {/* 4つのノードを描画 */}
+                      {['A', 'B', 'C', 'D'].map((node, index) => {
+                        // スコアに応じてサイズを変更（最小50px, 最大150px程度）
+                        const size = Math.min(Math.max(scores[node] * 4, 50), 150);
+                        const isTop = ranking[0] === node && scores[node] > 10;
+                        
+                        // 配置位置
+                        const positions = [
+                          { top: '20%', left: '20%' }, // A
+                          { top: '20%', right: '20%' }, // B
+                          { bottom: '20%', left: '20%' }, // C
+                          { bottom: '20%', right: '20%' }, // D
+                        ];
+
+                        return (
+                          <div 
+                            key={node}
+                            className={`absolute flex flex-col items-center justify-center rounded-full transition-all duration-500 z-10 ${
+                              isTop ? 'bg-yellow-500/20 border-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.4)]' : 'bg-blue-600/20 border-2 border-blue-500'
+                            }`}
+                            style={{
+                              width: `${size}px`,
+                              height: `${size}px`,
+                              ...positions[index]
+                            }}
+                          >
+                            {isTop && <Trophy className="w-5 h-5 text-yellow-400 absolute -top-6 animate-bounce" />}
+                            <span className={`font-black ${isTop ? 'text-yellow-400 text-2xl' : 'text-blue-400 text-xl'}`}>{node}</span>
+                            <span className="text-[10px] text-slate-300 font-mono mt-1">{scores[node].toFixed(1)} pt</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* 検索ランキング結果 */}
+                    <div className="bg-slate-950 p-6 rounded-3xl border border-slate-700">
+                      <h3 className="font-bold text-slate-300 mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
+                        <Search className="w-4 h-4 text-slate-500" /> 検索ランキング結果
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        {ranking.map((node, i) => (
+                          <div key={node} className={`flex items-center justify-between p-3 rounded-xl border ${
+                            i === 0 ? 'bg-yellow-900/20 border-yellow-500/50' : 'bg-slate-900 border-slate-800'
+                          }`}>
+                            <div className="flex items-center gap-4">
+                              <span className={`font-black text-xl w-6 text-center ${i === 0 ? 'text-yellow-400' : 'text-slate-500'}`}>{i + 1}</span>
+                              <span className="font-bold text-white">ウェブページ {node}</span>
+                            </div>
+                            <span className="font-mono text-sm text-slate-400">{scores[node].toFixed(1)} pt</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ======================================= */}
+          {/* 2. ゲームの当たり判定（AABB） */}
+          {/* ======================================= */}
+          {activeTab === 'collision' && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-5xl mx-auto">
+              <div className="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border border-slate-800 shadow-2xl">
+                
+                <h2 className="text-2xl md:text-3xl font-black text-white mb-4 flex items-center gap-3">
+                  <Swords className="w-8 h-8 text-rose-400" /> 
+                  コンピュータの「目」：当たり判定のアルゴリズム
+                </h2>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  マリオがクリボーを踏んだ時、コンピュータには「絵」は見えていません。<br />
+                  コンピュータは、キャラクターを<strong>「X座標（横）」と「Y座標（縦）」の数字</strong>として見ており、「2つの数字の範囲が重なった！」という引き算の結果だけで「ぶつかった（HIT）」と判断しています。
+                </p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  
+                  {/* 左：コントローラー */}
+                  <div className="bg-slate-950 p-6 md:p-8 rounded-3xl border border-slate-700 flex flex-col justify-center">
+                    <h3 className="font-bold text-white mb-6 flex items-center gap-2">
+                      <Crosshair className="w-5 h-5 text-rose-400" /> プレイヤーを動かしてぶつけてみよう
+                    </h3>
+
+                    <div className="space-y-8">
+                      {/* X軸スライダー */}
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-bold text-blue-400">横の動き (X座標)</label>
+                          <span className="font-mono text-blue-300 bg-blue-900/30 px-2 py-0.5 rounded">X: {playerX}</span>
+                        </div>
+                        <input 
+                          type="range" min="0" max="100" 
+                          value={playerX} onChange={(e) => setPlayerX(Number(e.target.value))}
+                          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                      </div>
+
+                      {/* Y軸スライダー */}
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-bold text-emerald-400">縦の動き (Y座標)</label>
+                          <span className="font-mono text-emerald-300 bg-emerald-900/30 px-2 py-0.5 rounded">Y: {playerY}</span>
+                        </div>
+                        <input 
+                          type="range" min="0" max="100" 
+                          value={playerY} onChange={(e) => setPlayerY(Number(e.target.value))}
+                          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-8 bg-slate-900 p-4 rounded-xl border border-slate-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <EyeOff className="w-4 h-4 text-slate-500" />
+                        <span className="text-xs font-bold text-slate-400">コンピュータの脳内チェック</span>
+                      </div>
+                      
+                      <div className={`flex items-center justify-between p-2 rounded ${isXHit ? 'bg-blue-900/20 text-blue-400' : 'text-slate-500'}`}>
+                        <span className="text-sm">横(X)の重なり:</span>
+                        {isXHit ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                      </div>
+                      <div className={`flex items-center justify-between p-2 rounded mt-1 ${isYHit ? 'bg-emerald-900/20 text-emerald-400' : 'text-slate-500'}`}>
+                        <span className="text-sm">縦(Y)の重なり:</span>
+                        {isYHit ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* 右：ゲーム画面 */}
+                  <div className="bg-[#1e1e1e] rounded-3xl border-4 border-slate-800 p-4 relative h-[300px] overflow-hidden flex shadow-2xl">
+                    <div className="absolute top-2 left-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Game Canvas</div>
+                    
+                    {/* X軸のガイドライン（重なっている時だけ光る） */}
+                    <div className={`absolute top-0 bottom-0 transition-opacity duration-200 ${isXHit ? 'bg-blue-500/10 border-x border-blue-500/30' : 'opacity-0'}`} 
+                         style={{ left: `${enemyX - size}%`, width: `${size * 2}%` }}></div>
+                         
+                    {/* Y軸のガイドライン（重なっている時だけ光る） */}
+                    <div className={`absolute left-0 right-0 transition-opacity duration-200 ${isYHit ? 'bg-emerald-500/10 border-y border-emerald-500/30' : 'opacity-0'}`} 
+                         style={{ top: `${enemyY - size}%`, height: `${size * 2}%` }}></div>
+
+                    {/* 敵キャラクター（固定） */}
+                    <div className="absolute bg-rose-500/80 border-2 border-rose-500 rounded flex items-center justify-center text-white font-bold"
+                         style={{ 
+                           left: `${enemyX}%`, top: `${enemyY}%`, 
+                           width: `${size*2}%`, height: `${size*2}%`, 
+                           transform: 'translate(-50%, -50%)' 
+                         }}>
+                      敵
+                    </div>
+
+                    {/* プレイヤーキャラクター（動く） */}
+                    <div className={`absolute border-2 flex items-center justify-center text-white font-bold transition-all duration-100 ${
+                          isHit ? 'bg-yellow-500 border-yellow-300 scale-125 z-20 shadow-[0_0_30px_rgba(234,179,8,0.8)]' : 'bg-blue-500/80 border-blue-400 z-10'
+                         }`}
+                         style={{ 
+                           left: `${playerX}%`, top: `${playerY}%`, 
+                           width: `${size*2}%`, height: `${size*2}%`, 
+                           transform: 'translate(-50%, -50%)' 
+                         }}>
+                      {isHit ? '💥' : '自'}
+                    </div>
+
+                    {/* HIT! の文字エフェクト */}
+                    {isHit && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                        <span className="text-6xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] animate-bounce" style={{ WebkitTextStroke: '2px red' }}>
+                          HIT!!
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
+```
